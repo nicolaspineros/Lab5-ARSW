@@ -24,7 +24,113 @@ Del anterior diagrama de componentes (de alto nivel), se desprendió el siguient
 
 1. Integre al proyecto base suministrado los Beans desarrollados en el ejercicio anterior. Sólo copie las clases, NO los archivos de configuración. Rectifique que se tenga correctamente configurado el esquema de inyección de dependencias con las anotaciones @Service y @Autowired.
 
+Añadimos las carpetas de ```filters``` ```model``` ```persistence``` y ```services``` con sus respectivas clases implementadas en el laboratorio pasado, la principal configuracion de inyección de dependencias con las anotaciones @Service y @Autowired las encontramos en la clase ```BlueprintsServices```
+
+```java
+@Service
+public class BlueprintsServices {
+   
+    @Autowired
+    @Qualifier("InMemoryBlueprintPersistence")
+    BlueprintsPersistence bpp;
+
+    @Autowired
+    @Qualifier("RedundancyFilter")
+    BlueprintsFilter bpf;
+
+
+    public void addNewBlueprint(Blueprint bp) throws BlueprintPersistenceException {
+        bpp.saveBlueprint(bp);
+    }
+    
+    public Set<Blueprint> getAllBlueprints(){
+        return bpp.getAllBlueprints();
+    }
+    
+    /**
+     * 
+     * @param author blueprint's author
+     * @param name blueprint's name
+     * @return the blueprint of the given name created by the given author
+     * @throws BlueprintNotFoundException if there is no such blueprint
+     */
+    public Blueprint getBlueprint(String author,String name) throws BlueprintNotFoundException{
+        return bpp.getBlueprint(author,name);
+    }
+    
+    /**
+     * 
+     * @param author blueprint's author
+     * @return all the blueprints of the given author
+     * @throws BlueprintNotFoundException if the given author doesn't exist
+     */
+    public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException{
+        return bpp.getBlueprintsByAuthor(author);
+    }
+
+    public Blueprint filter(Blueprint bp){
+        return bpf.filter(bp);
+    }
+
+}
+```
+
 2. Modifique el bean de persistecia 'InMemoryBlueprintPersistence' para que por defecto se inicialice con al menos otros tres planos, y con dos asociados a un mismo autor.
+
+Creamos loa tres planos y dos los asociamos al autor ```Nicolas```
+
+```java
+@Service("InMemoryBlueprintPersistence")
+public class InMemoryBlueprintPersistence implements BlueprintsPersistence{
+
+    private final Map<Tuple<String,String>,Blueprint> blueprints=new HashMap<>();
+
+    public InMemoryBlueprintPersistence() {
+        //load stub data
+        Point[] pts=new Point[]{new Point(140, 140),new Point(115, 115)};
+        Point[] pts1=new Point[]{new Point(10, 10),new Point(15, 10)};
+        Point[] pts2=new Point[]{new Point(14, 14),new Point(20, 20)};
+        Blueprint bp=new Blueprint("Juan", "bp",pts);
+        Blueprint bp1=new Blueprint("Nicolas", "bp1 ",pts);
+        Blueprint bp2=new Blueprint("Nicolas", "bp2 ",pts);
+        blueprints.put(new Tuple<>(bp.getAuthor(),bp.getName()), bp);
+        blueprints.put(new Tuple<>(bp1.getAuthor(),bp1.getName()), bp1);
+        blueprints.put(new Tuple<>(bp2.getAuthor(),bp2.getName()), bp2);
+    }    
+    
+    @Override
+    public void saveBlueprint(Blueprint bp) throws BlueprintPersistenceException {
+        if (blueprints.containsKey(new Tuple<>(bp.getAuthor(),bp.getName()))){
+            throw new BlueprintPersistenceException("The given blueprint already exists: "+bp);
+        }
+        else{
+            blueprints.put(new Tuple<>(bp.getAuthor(),bp.getName()), bp);
+        }        
+    }
+
+    @Override
+    public Blueprint getBlueprint(String author, String bprintname) throws BlueprintNotFoundException {
+        return blueprints.get(new Tuple<>(author, bprintname));
+    }
+
+    @Override
+    public HashSet<Blueprint> getAllBlueprints(){
+        return new HashSet<Blueprint>(blueprints.values());
+    }
+
+    @Override
+    public Set<Blueprint> getBlueprintsByAuthor(String author) throws BlueprintNotFoundException{
+        Set<Blueprint> resp = new HashSet<>();
+        Set<Tuple<String,String>> llaves = blueprints.keySet();
+        for (Tuple<String,String> i : llaves){
+            if (i.getElem1().equals(author)){
+                resp.add(blueprints.get(i));
+            }
+        }
+        return resp;
+    }
+}
+```
 
 3. Configure su aplicación para que ofrezca el recurso "/blueprints", de manera que cuando se le haga una petición GET, retorne -en formato jSON- el conjunto de todos los planos. Para esto:
 
@@ -49,6 +155,29 @@ Del anterior diagrama de componentes (de alto nivel), se desprendió el siguient
 
 	```
 	* Haga que en esta misma clase se inyecte el bean de tipo BlueprintServices (al cual, a su vez, se le inyectarán sus dependencias de persisntecia y de filtrado de puntos).
+
+Modificamos la clase ```BlueprintAPIController``` agregando la inyección de ```BlueprintsServices``` para acceder a la data
+
+```java
+@RestController
+@RequestMapping(value = "/blueprints")
+public class BlueprintAPIController {
+    @Autowired
+    @Qualifier("BlueprintsServices")
+    BlueprintsServices services;
+
+    @RequestMapping(method = RequestMethod.GET)
+    public ResponseEntity<?> manejadorBlueprints() {
+        try {
+            //obtener datos que se enviarán a través del API
+            return new ResponseEntity<>(services.getAllBlueprints(), HttpStatus.ACCEPTED);
+        } catch (Exception ex) {
+            Logger.getLogger(BlueprintAPIController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity<>("Error bla bla bla", HttpStatus.NOT_FOUND);
+        }
+    }
+}
+```
 
 4. Verifique el funcionamiento de a aplicación lanzando la aplicación con maven:
 
