@@ -29,7 +29,6 @@ public class BlueprintAPIController {
     @Autowired
     @Qualifier("BlueprintsServices")
     BlueprintsServices services;
-
     @RequestMapping(method = RequestMethod.GET)
     public ResponseEntity<?> manejadorBlueprints() {
         try {

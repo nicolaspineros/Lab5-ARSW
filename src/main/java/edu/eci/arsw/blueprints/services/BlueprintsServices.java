@@ -20,7 +20,7 @@ import java.util.Set;
  *
  * @author hcadavid
  */
-@Service
+@Service("BlueprintsServices")
 public class BlueprintsServices {
    
     @Autowired
