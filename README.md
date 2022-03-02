@@ -292,10 +292,25 @@ public class BlueprintAPIController {
 
 3. Teniendo en cuenta el autor y numbre del plano registrado, verifique que el mismo se pueda obtener mediante una petición GET al recurso '/blueprints/{author}/{bpname}' correspondiente.
 
-	![](img/Parte2Punto3.png)
+    ![](img/Parte2Punto3.png)
 
 4. Agregue soporte al verbo PUT para los recursos de la forma '/blueprints/{author}/{bpname}', de manera que sea posible actualizar un plano determinado.
 
+    Para esto creamos el metodo en ```BLueprintAPIController``` y al no tener un metodo "update" creamos el servicio en ```BlueprintServices``` y las demas clases/capas necesarias
+
+    ```java
+   @RequestMapping(value="/{author}/{name}",method = RequestMethod.PUT)
+    @ResponseBody
+    public ResponseEntity<?> manejadorPutBlueprint(@PathVariable("author") String author,@PathVariable("name") String name,@RequestBody Blueprint bp ) {
+        try {
+            services.updateBlueprint(bp,author,name);
+            return new ResponseEntity<>(HttpStatus.ACCEPTED);
+        } catch (Exception ex) {
+            Logger.getLogger(BlueprintAPIController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity<>( HttpStatus.NOT_FOUND);
+        }
+    }
+	```
 
 ### Parte III
 
