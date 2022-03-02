@@ -243,7 +243,7 @@ public class BlueprintAPIController {
 
 1.  Agregue el manejo de peticiones POST (creación de nuevos planos), de manera que un cliente http pueda registrar una nueva orden haciendo una petición POST al recurso ‘planos’, y enviando como contenido de la petición todo el detalle de dicho recurso a través de un documento jSON. Para esto, tenga en cuenta el siguiente ejemplo, que considera -por consistencia con el protocolo HTTP- el manejo de códigos de estados HTTP (en caso de éxito o error):
 
-	```	java
+	``` java
 	@RequestMapping(method = RequestMethod.POST)	
 	public ResponseEntity<?> manejadorPostRecursoXX(@RequestBody TipoXX o){
         try {
@@ -255,7 +255,21 @@ public class BlueprintAPIController {
         }        
  	
 	}
-	```	
+ 	```
+ 	Agremos nuestra implementacion usando el metodo ````addNewBlueprint````
+	```java
+	@RequestMapping(value="/crear-bp",method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<?> manejadorPostBlueprint(@RequestBody Blueprint bp){
+        try {
+            services.addNewBlueprint(bp);
+            return new ResponseEntity<>(HttpStatus.CREATED);
+        } catch (Exception ex) {
+            Logger.getLogger(BlueprintAPIController.class.getName()).log(Level.SEVERE, null, ex);
+            return new ResponseEntity<>("Error bla bla bla",HttpStatus.FORBIDDEN);
+        }
+    }
+	```
 
 
 2.  Para probar que el recurso ‘planos’ acepta e interpreta
@@ -267,15 +281,18 @@ public class BlueprintAPIController {
 
 	```	
 	$ curl -i -X POST -HContent-Type:application/json -HAccept:application/json http://URL_del_recurso_ordenes -d '{ObjetoJSON}'
-	```	
+	```
 
 	Con lo anterior, registre un nuevo plano (para 'diseñar' un objeto jSON, puede usar [esta herramienta](http://www.jsoneditoronline.org/)):
-	
 
 	Nota: puede basarse en el formato jSON mostrado en el navegador al consultar una orden con el método GET.
 
+	
+	curl -i -X POST -HContent-Type:application/json -HAccept:application/json http://localhost:8080/blueprints/crear-bp -d "{"""author""":"""sarah""","""points""":[{"""x""":20,"""y""":30},{"""x""":40,"""y""":50}],"""name""":"""postpd"""}"
 
 3. Teniendo en cuenta el autor y numbre del plano registrado, verifique que el mismo se pueda obtener mediante una petición GET al recurso '/blueprints/{author}/{bpname}' correspondiente.
+
+	![](img/Parte2Punto3.png)
 
 4. Agregue soporte al verbo PUT para los recursos de la forma '/blueprints/{author}/{bpname}', de manera que sea posible actualizar un plano determinado.
 
