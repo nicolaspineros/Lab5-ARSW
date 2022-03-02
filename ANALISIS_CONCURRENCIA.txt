@@ -1,0 +1,10 @@
+* Qué condiciones de carrera se podrían presentar?
+
+    Podria haber una condicion de carrera cuando se quiera consultar a la lista pero al mismo tiempo se este actualizando algun dato o se quiera agregar algun dato
+	Tambien cuando 2 personas quieran actualizar el mismo plano al mismo tiempo
+
+* Cuales son las respectivas regiones críticas?
+
+	La region critica se encuentra en los cambios que se hagan sobre el mapa en el que estan los planos donde se crean, consultan y actualizan
+
+La colección usada en InMemoryBlueprintPersistence no es Thread-safe por lo que usaremos un ConcurrentHashMap
